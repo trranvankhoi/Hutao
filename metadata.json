@@ -1,0 +1,6 @@
+{
+  "name": "Remote Desktop",
+  "description": "Ultra low-latency complete remote desktop solution with gesture touch control, real-time audio keyboard mapping, and autodiscovery targeting modern PC companion pipelines.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
