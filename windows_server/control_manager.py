@@ -18,11 +18,15 @@ class ControlManager:
         # fallback to pyautogui for coordinates and mouse.
         self.keyboard_controller = pynput.keyboard.Controller()
         self.mouse_controller = pynput.mouse.Controller()
+        self.enabled = True
 
     def handle_command(self, cmd: Dict[str, Any]) -> Dict[str, Any]:
         """
         Processes command safely, returns result dict.
         """
+        if not self.enabled:
+            return {"status": "error", "message": "Controls are currently disabled on the server"}
+
         cmd_type = cmd.get("type")
         
         try:
@@ -99,6 +103,22 @@ class ControlManager:
         """
         Converts custom keyboard action codes to Windows inputs.
         """
+        code = key_code.lower()
+        if code == "win+l":
+            import ctypes
+            ctypes.windll.user32.LockWorkStation()
+            return
+        elif code in ("ctrl+alt+del", "ctrl+alt+delete"):
+            # Direct Windows OS security restrictions prevent simulating true Ctrl+Alt+Del signal,
+            # but we can simulate Ctrl+Shift+Esc to directly trigger the Windows Task Manager.
+            try:
+                with self.keyboard_controller.pressed(pynput.keyboard.Key.ctrl, pynput.keyboard.Key.shift):
+                    self.keyboard_controller.press(pynput.keyboard.Key.esc)
+                    self.keyboard_controller.release(pynput.keyboard.Key.esc)
+            except Exception:
+                pass
+            return
+
         key_map = {
             "enter": pynput.keyboard.Key.enter,
             "backspace": pynput.keyboard.Key.backspace,

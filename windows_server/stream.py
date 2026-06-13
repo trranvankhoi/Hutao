@@ -3,6 +3,7 @@ import struct
 import math
 import time
 import logging
+import threading
 from typing import List, Optional, Tuple
 from .capture import ScreenCapturer
 
@@ -42,6 +43,7 @@ class VideoStreamer:
         self.frame_counter = 0
         self.client_address_and_token: Optional[Tuple[str, int]] = None
         self.thread = None
+        self.current_fps = 0
 
     def start(self):
         """
@@ -80,6 +82,8 @@ class VideoStreamer:
         """
         Indefinite loop that generates frames and transmits them in fragment flows.
         """
+        fps_start_time = time.time()
+        fps_count = 0
         while self.running:
             start_time = time.time()
             
@@ -97,8 +101,17 @@ class VideoStreamer:
                     
                     self._send_fragmented_frame(frame_bytes, is_delta, bbox)
                     self.frame_counter = (self.frame_counter + 1) % 65536
+                    
+                    fps_count += 1
+                    now = time.time()
+                    if now - fps_start_time >= 1.0:
+                        self.current_fps = int(fps_count / (now - fps_start_time))
+                        fps_count = 0
+                        fps_start_time = now
                 except Exception as e:
                     logger.error(f"Failed to capture or stream frame: {e}")
+            else:
+                self.current_fps = 0
             
             # Rate limiter
             elapsed = time.time() - start_time
